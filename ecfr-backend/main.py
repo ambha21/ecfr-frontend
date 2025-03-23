@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
 from dotenv import load_dotenv
+from collections import Counter
+from datetime import datetime
+import time
 
 load_dotenv()
 BASE_URL = "https://www.ecfr.gov"
@@ -11,11 +14,26 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Adjust for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Simple in-memory cache
+CACHE = {}
+TTL = 3600  # Cache Time-To-Live in seconds (e.g., 1 hour)
+
+def get_cached(key: str):
+    entry = CACHE.get(key)
+    if entry:
+        timestamp, value = entry
+        if time.time() - timestamp < TTL:
+            return value
+    return None
+
+def set_cache(key: str, value):
+    CACHE[key] = (time.time(), value)
 
 @app.get("/ping")
 def ping():
@@ -23,15 +41,25 @@ def ping():
 
 @app.get("/titles")
 def get_titles():
+    cache_key = "titles"
+    cached = get_cached(cache_key)
+    if cached is not None:
+        return cached
+
     response = requests.get(f"{BASE_URL}/api/versioner/v1/titles.json")
     if response.status_code == 200:
-        return response.json()
+        result = response.json()
+        set_cache(cache_key, result)
+        return result
     return {"error": "Failed to fetch titles"}
 
-# Option 1: Update frontend to use /titles
-# OR, if you want /words_by_title to be available, you can add:
 @app.get("/words_by_title")
 def words_by_title():
+    cache_key = "words_by_title"
+    cached = get_cached(cache_key)
+    if cached is not None:
+        return cached
+
     response = requests.get(f"{BASE_URL}/api/versioner/v1/titles.json")
     if response.status_code != 200:
         return {"error": "Failed to fetch titles"}
@@ -62,19 +90,61 @@ def words_by_title():
         else:
             title["word_count"] = 0
         augmented_titles.append(title)
-    print("Returning augmented titles:", augmented_titles)
+    # print("Returning augmented titles:", augmented_titles)
+    set_cache(cache_key, augmented_titles)
     return augmented_titles
-
 
 @app.get("/regulation_churn")
 def regulation_churn():
-    response = requests.get(f"{BASE_URL}/api/admin/v1/corrections.json")
-    if response.status_code == 200:
-        return response.json()
-    return {"error": "Failed to fetch regulation churn data"}
+    cache_key = "regulation_churn"
+    cached = get_cached(cache_key)
+    if cached is not None:
+        return cached
+
+    # Fetch titles first
+    print("Fetching titles...")
+    response = requests.get(f"{BASE_URL}/api/versioner/v1/titles.json")
+    if response.status_code != 200:
+        return {"error": "Failed to fetch titles"}
+    titles = response.json().get("titles", [])
+    
+    title_revisions = []
+    
+    for t in titles:
+        amendments_response = requests.get(f"{BASE_URL}/api/versioner/v1/versions/title-{t['number']}.json")
+        if amendments_response.status_code == 200:
+            amendments = amendments_response.json().get("content_versions", [])
+        else:
+            amendments = []
+        
+        try:
+            changes_per_year = {
+                str(year): count
+                for year, count in Counter(
+                    datetime.strptime(a["amendment_date"], "%Y-%m-%d").year
+                    for a in amendments if a.get("amendment_date")
+                ).items()
+            }
+        except Exception as e:
+            changes_per_year = {}
+            print(f"Error processing title {t['number']}: {e}")
+        
+        title_revisions.append({
+            "title_number": t["number"],
+            "title_name": t.get("name", ""),
+            "changes_per_year": changes_per_year
+        })
+    
+    set_cache(cache_key, title_revisions)
+    return title_revisions
 
 @app.get("/common_words_by_title")
 def common_words_by_title(title: int):
+    cache_key = f"common_words_by_title_{title}"
+    cached = get_cached(cache_key)
+    if cached is not None:
+        return cached
+
     response = requests.get(f"{BASE_URL}/api/versioner/v1/full/2023-01-01/title-{title}.xml")
     if response.status_code != 200:
         return {"error": "Failed to fetch title XML"}
@@ -89,7 +159,9 @@ def common_words_by_title(title: int):
     if len(filtered_words) > 250000:
         filtered_words = random.sample(filtered_words, 250000)
     word_counts = Counter(filtered_words)
-    return word_counts.most_common(50)
+    result = word_counts.most_common(50)
+    set_cache(cache_key, result)
+    return result
 
 if __name__ == "__main__":
     import uvicorn

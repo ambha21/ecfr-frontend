@@ -14,7 +14,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const ANALYTICS_API = 'https://ecfr-backend-8ri8.onrender.com/';
+const ANALYTICS_API = 'http://127.0.0.1:8000';
 
 interface ChurnData {
   labels: string[];
@@ -23,15 +23,18 @@ interface ChurnData {
 
 const ChurnChart: React.FC = () => {
   const [churnData, setChurnData] = useState<ChurnData>({ labels: [], values: [] });
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     fetch(`${ANALYTICS_API}/regulation_churn`)
       .then((response) => response.json())
       .then((data) => {
+        console.log('Regulation churn data:', data);
         const aggregatedData: Record<string, number> = {};
 
         data.forEach(({ changes_per_year }: any) => {
           Object.entries(changes_per_year).forEach(([year, count]) => {
+            // Remove filter if you want all years; adjust as needed.
             if (parseInt(year) > 2016) {
               aggregatedData[year] = (aggregatedData[year] || 0) + count;
             }
@@ -42,14 +45,26 @@ const ChurnChart: React.FC = () => {
         const values = sortedYears.map((year) => aggregatedData[year]);
 
         setChurnData({ labels: sortedYears, values });
+        setLoading(false);
       })
-      .catch((error) => console.error('Error fetching regulation churn data:', error));
+      .catch((error) => {
+        console.error('Error fetching regulation churn data:', error);
+        setLoading(false);
+      });
   }, []);
 
+  if (loading) {
+    return (
+      <div className="w-3/4 mx-auto py-6 text-center text-white">
+        <p>Loading regulation churn data...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-3/4 mx-auto">
+    <div className="w-3/4 mx-auto text-center">  
       <h2 className="text-xl font-bold text-white">Regulation Churn</h2>
-      <p className="mb-4">Total number of amendments to all titles by year</p>
+      <p className="mb-4 text-white">Total number of amendments to all titles by year</p>
       <Bar
         data={{
           labels: churnData.labels,
