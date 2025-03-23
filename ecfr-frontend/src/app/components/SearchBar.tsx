@@ -46,8 +46,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ setResults, setQuery }) => {
     if (debouncedQuery) {
       fetchSearchResults(debouncedQuery)
         .then((response) => {
-          const parsed = JSON.parse(response);
-          setResults(parsed.results || []);
+          if (response) {
+            const parsed = JSON.parse(response);
+            setResults(parsed.results || []);
+          } else {
+            setResults([]);
+          }
         })
         .catch((error) => {
           console.error('Error fetching search results:', error);
