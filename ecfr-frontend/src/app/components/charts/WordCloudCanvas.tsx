@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import WordCloud from 'wordcloud';
 
-const ANALYTICS_API = 'https://ecfr-backend.onrender.com';
+const ANALYTICS_API = 'https://ecfr-backend-8ri8.onrender.com/';
 
 const WordCloudCanvas: React.FC = () => {
   const [title, setTitle] = useState(1);

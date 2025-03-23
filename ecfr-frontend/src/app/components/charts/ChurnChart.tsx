@@ -14,7 +14,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const ANALYTICS_API = 'https://ecfr-backend.onrender.com';
+const ANALYTICS_API = 'https://ecfr-backend-8ri8.onrender.com/';
 
 interface ChurnData {
   labels: string[];

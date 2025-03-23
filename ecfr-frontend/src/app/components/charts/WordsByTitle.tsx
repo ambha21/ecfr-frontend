@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import CountUp from 'react-countup';
 
-const ANALYTICS_API = 'https://ecfr-backend.onrender.com';
+const ANALYTICS_API = 'https://ecfr-backend-8ri8.onrender.com/';
 
 interface TitleData {
   number: number;
