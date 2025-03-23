@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
+import json
 from dotenv import load_dotenv
 from collections import Counter
 from datetime import datetime
@@ -20,20 +21,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Simple in-memory cache
-CACHE = {}
-TTL = 3600  # Cache Time-To-Live in seconds (e.g., 1 hour)
+# Define cache file and TTL (e.g., 1 hour)
+CACHE_FILENAME = "regulation_churn_cache.json"
+CACHE_TTL = 3600  # seconds
 
-def get_cached(key: str):
-    entry = CACHE.get(key)
-    if entry:
-        timestamp, value = entry
-        if time.time() - timestamp < TTL:
-            return value
+def load_cache():
+    if os.path.exists(CACHE_FILENAME):
+        last_modified = os.path.getmtime(CACHE_FILENAME)
+        if time.time() - last_modified < CACHE_TTL:
+            with open(CACHE_FILENAME, "r") as f:
+                return json.load(f)
     return None
 
-def set_cache(key: str, value):
-    CACHE[key] = (time.time(), value)
+def save_cache(data):
+    with open(CACHE_FILENAME, "w") as f:
+        json.dump(data, f)
 
 @app.get("/ping")
 def ping():
@@ -41,25 +43,13 @@ def ping():
 
 @app.get("/titles")
 def get_titles():
-    cache_key = "titles"
-    cached = get_cached(cache_key)
-    if cached is not None:
-        return cached
-
     response = requests.get(f"{BASE_URL}/api/versioner/v1/titles.json")
     if response.status_code == 200:
-        result = response.json()
-        set_cache(cache_key, result)
-        return result
+        return response.json()
     return {"error": "Failed to fetch titles"}
 
 @app.get("/words_by_title")
 def words_by_title():
-    cache_key = "words_by_title"
-    cached = get_cached(cache_key)
-    if cached is not None:
-        return cached
-
     response = requests.get(f"{BASE_URL}/api/versioner/v1/titles.json")
     if response.status_code != 200:
         return {"error": "Failed to fetch titles"}
@@ -90,19 +80,17 @@ def words_by_title():
         else:
             title["word_count"] = 0
         augmented_titles.append(title)
-    # print("Returning augmented titles:", augmented_titles)
-    set_cache(cache_key, augmented_titles)
+    print("Returning augmented titles:", augmented_titles)
     return augmented_titles
 
 @app.get("/regulation_churn")
 def regulation_churn():
-    cache_key = "regulation_churn"
-    cached = get_cached(cache_key)
+    # Try to load cached data
+    cached = load_cache()
     if cached is not None:
         return cached
 
-    # Fetch titles first
-    print("Fetching titles...")
+    print("Fetching titles for regulation churn...")
     response = requests.get(f"{BASE_URL}/api/versioner/v1/titles.json")
     if response.status_code != 200:
         return {"error": "Failed to fetch titles"}
@@ -135,16 +123,14 @@ def regulation_churn():
             "changes_per_year": changes_per_year
         })
     
-    set_cache(cache_key, title_revisions)
+    # Save to cache file for future requests
+    save_cache(title_revisions)
     return title_revisions
 
 @app.get("/common_words_by_title")
 def common_words_by_title(title: int):
     cache_key = f"common_words_by_title_{title}"
-    cached = get_cached(cache_key)
-    if cached is not None:
-        return cached
-
+    # For simplicity, no file caching here, but you can add it similarly.
     response = requests.get(f"{BASE_URL}/api/versioner/v1/full/2023-01-01/title-{title}.xml")
     if response.status_code != 200:
         return {"error": "Failed to fetch title XML"}
@@ -159,9 +145,7 @@ def common_words_by_title(title: int):
     if len(filtered_words) > 250000:
         filtered_words = random.sample(filtered_words, 250000)
     word_counts = Counter(filtered_words)
-    result = word_counts.most_common(50)
-    set_cache(cache_key, result)
-    return result
+    return word_counts.most_common(50)
 
 if __name__ == "__main__":
     import uvicorn
