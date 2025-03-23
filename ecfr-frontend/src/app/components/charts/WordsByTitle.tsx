@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import CountUp from 'react-countup';
 
-const ANALYTICS_API = 'https://ecfr-backend.onrender.com';
+const ANALYTICS_API = 'http://127.0.0.1:8000';
 
 interface TitleData {
   number: number;
@@ -13,16 +13,30 @@ interface TitleData {
 
 const WordsByTitle: React.FC = () => {
   const [wordCounts, setWordCounts] = useState<TitleData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${ANALYTICS_API}/words_by_title`)
       .then((response) => response.json())
       .then((data: TitleData[]) => {
+        console.log('Fetched data:', data);
         const sortedData = data.sort((a, b) => (b.word_count || 0) - (a.word_count || 0));
         setWordCounts(sortedData);
+        setLoading(false);
       })
-      .catch((error) => console.error('Error fetching word counts:', error));
+      .catch((error) => {
+        console.error('Error fetching word counts:', error);
+        setLoading(false);
+      });
   }, []);
+
+  if (loading) {
+    return (
+      <div className="w-3/4 mx-auto py-6 text-center text-white">
+        <p>Loading title data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-3/4 mx-auto">
@@ -51,7 +65,9 @@ const WordsByTitle: React.FC = () => {
               <tr key={index} className="border-b">
                 <td className="p-3">{title.number}</td>
                 <td className="p-3">{title.name}</td>
-                <td className="p-3">{title.word_count ? title.word_count.toLocaleString() : 'N/A'}</td>
+                <td className="p-3">
+                  {title.word_count !== undefined ? title.word_count.toLocaleString() : 'N/A'}
+                </td>
                 <td className="p-3">
                   <div className="w-full bg-gray-200 rounded h-2">
                     <div
@@ -76,3 +92,4 @@ const WordsByTitle: React.FC = () => {
 };
 
 export default WordsByTitle;
+// Compare this snippet from ecfr-frontend/src/app/components/charts/ChurnChart.tsx:
