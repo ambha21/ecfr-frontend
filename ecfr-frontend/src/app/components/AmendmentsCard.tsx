@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { fetchParsedSection } from '../utils/api';
-import { parseXMLToHTML } from '../utils/utils';
+import { fetchParsedSection } from '../../../utils/api';
+import { parseXMLToHTML } from '../../../utils/utils';
 
 interface AmendmentsCardProps {
   data: any; // refine type as needed
