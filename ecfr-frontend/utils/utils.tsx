@@ -1,7 +1,6 @@
-// utils/utils.ts
 import React from 'react';
 
-export const parseXMLToHTML = (xmlString: string): JSX.Element => {
+export const parseXMLToHTML = (xmlString: string): TSX.Element => {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "application/xml");
 
