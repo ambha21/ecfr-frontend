@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const ANALYTICS_API = 'http://127.0.0.1:8000';
+const ANALYTICS_API = 'https://ecfr-backend-8ri8.onrender.com';
 
 const WordCloudCanvas: React.FC = () => {
   const [title, setTitle] = useState(1);

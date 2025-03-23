@@ -20,7 +20,9 @@ const inconsolata = Inconsolata({ subsets: ['latin'] });
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
-      <body className={`bg-gray-900 text-white h-screen flex flex-col font-inconsolata ${inconsolata.className}`}>
+      <body 
+      suppressHydrationWarning
+      className={`bg-gray-900 text-white h-screen flex flex-col font-inconsolata ${inconsolata.className}`}>
         <Navbar />
         <main className="flex-grow">
           {children}
