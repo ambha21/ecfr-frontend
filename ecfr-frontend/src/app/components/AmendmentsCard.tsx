@@ -41,6 +41,7 @@ const AmendmentsCard: React.FC<AmendmentsCardProps> = ({ data }) => {
       section: section.identifier,
     };
     try {
+      // @ts-ignore
       const xmlText = await fetchParsedSection(breadCrumbObj, section.issue_date);
       const parsedHTML = parseXMLToHTML(xmlText);
       setSectionContent(parsedHTML);

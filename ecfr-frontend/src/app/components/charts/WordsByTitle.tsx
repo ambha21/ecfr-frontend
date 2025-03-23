@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import CountUp from 'react-countup';
 
-const ANALYTICS_API = 'http://127.0.0.1:8000';
+const ANALYTICS_API = 'https://ecfr-backend-8ri8.onrender.com';
 
 interface TitleData {
   number: number;
@@ -92,4 +92,3 @@ const WordsByTitle: React.FC = () => {
 };
 
 export default WordsByTitle;
-// Compare this snippet from ecfr-frontend/src/app/components/charts/ChurnChart.tsx:

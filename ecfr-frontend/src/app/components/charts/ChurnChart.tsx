@@ -14,7 +14,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const ANALYTICS_API = 'http://127.0.0.1:8000';
+const ANALYTICS_API = 'https://ecfr-backend-8ri8.onrender.com';
 
 interface ChurnData {
   labels: string[];
@@ -34,9 +34,8 @@ const ChurnChart: React.FC = () => {
 
         data.forEach(({ changes_per_year }: any) => {
           Object.entries(changes_per_year).forEach(([year, count]) => {
-            // Remove filter if you want all years; adjust as needed.
             if (parseInt(year) > 2016) {
-              aggregatedData[year] = (aggregatedData[year] || 0) + count;
+              aggregatedData[year] = (aggregatedData[year] || 0) + (count as number);
             }
           });
         });

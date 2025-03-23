@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import WordCloud from 'wordcloud';
 
-const ANALYTICS_API = 'http://127.0.0.1:8000';
+const ANALYTICS_API = 'https://ecfr-backend-8ri8.onrender.com';
 
 const WordCloudCanvas: React.FC = () => {
   const [title, setTitle] = useState(1);
@@ -64,7 +64,7 @@ const WordCloudCanvas: React.FC = () => {
     WordCloud(canvas, {
       list: normalizedWords,
       gridSize: Math.round(8 * (containerWidth / 600)),
-      weightFactor: (size) => Math.min(size * (containerWidth / 800), containerHeight / 10),
+      weightFactor: (size: any) => Math.min(size * (containerWidth / 800), containerHeight / 10),
       rotateRatio: 0.2,
       rotationSteps: 2,
       backgroundColor: "#1E293B",

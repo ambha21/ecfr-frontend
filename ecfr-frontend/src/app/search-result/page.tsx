@@ -38,7 +38,7 @@ export default function SearchResultPage() {
                 .filter(([_, value]) => value)
                 .map(([key, value]) => (
                   <li key={key}>
-                    <span className="font-bold capitalize">{key}:</span> {value}
+                    <span className="font-bold capitalize">{key}:</span> {value as string}
                   </li>
                 ))}
             </ul>
@@ -51,7 +51,7 @@ export default function SearchResultPage() {
                 .map(([key, value]) => (
                   <li key={key}>
                     <span className="font-bold capitalize">{key}:</span>{' '}
-                    <span dangerouslySetInnerHTML={{ __html: value }} />
+                    <span dangerouslySetInnerHTML={{ __html: value as string }} />
                   </li>
                 ))}
             </ul>
