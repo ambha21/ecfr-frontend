@@ -1,8 +1,14 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import React, { Suspense } from 'react';
 
-export default function SearchResultPage() {
+// Remove these exports
+// export const dynamic = 'force-dynamic';
+// export const revalidate = 0;
+
+// Create a client component that uses the hooks
+function SearchResultContent() {
   const searchParams = useSearchParams();
   const resultParam = searchParams.get('result');
   let result: any = null;
@@ -15,10 +21,6 @@ export default function SearchResultPage() {
     }
   }
 
-  if (!result) {
-    return <p className="text-center text-gray-400">No search result data available.</p>;
-  }
-
   return (
     <div className="h-full flex flex-col items-center bg-gray-900 text-white">
       <div className="flex-grow flex flex-col p-6">
@@ -26,15 +28,15 @@ export default function SearchResultPage() {
         <div className="w-full max-w-2xl bg-gray-800 p-6 rounded-lg border border-gray-700">
           <p className="text-gray-400">
             📅 <span className="font-bold">Effective Dates:</span>{' '}
-            {result.starts_on} → {result.ends_on || "Present"}
+            {result?.starts_on} → {result?.ends_on || "Present"}
           </p>
           <p className="text-gray-400">
-            📖 <span className="font-bold">Type:</span> {result.type}
+            📖 <span className="font-bold">Type:</span> {result?.type}
           </p>
           <div className="mt-4">
             <h2 className="text-lg font-semibold">📌 Hierarchy</h2>
             <ul className="text-gray-300">
-              {Object.entries(result.hierarchy_headings)
+              {result?.hierarchy_headings && Object.entries(result.hierarchy_headings)
                 .filter(([_, value]) => value)
                 .map(([key, value]) => (
                   <li key={key}>
@@ -46,7 +48,7 @@ export default function SearchResultPage() {
           <div className="mt-4">
             <h2 className="text-lg font-semibold">📝 Headings</h2>
             <ul className="text-gray-300">
-              {Object.entries(result.headings)
+              {result?.headings && Object.entries(result.headings)
                 .filter(([_, value]) => value)
                 .map(([key, value]) => (
                   <li key={key}>
@@ -56,18 +58,18 @@ export default function SearchResultPage() {
                 ))}
             </ul>
           </div>
-          {result.full_text_excerpt && (
+          {result?.full_text_excerpt && (
             <div className="mt-4">
               <h2 className="text-lg font-semibold">🔍 Excerpt</h2>
               <p className="text-gray-300" dangerouslySetInnerHTML={{ __html: result.full_text_excerpt }} />
             </div>
           )}
           <div className="mt-4 text-gray-400">
-            <p>📊 <span className="font-bold">Score:</span> {result.score}</p>
-            <p>📑 <span className="font-bold">Index:</span> {result.structure_index}</p>
-            <p>🔖 <span className="font-bold">Status:</span> {result.reserved ? "Reserved" : "Active"}</p>
-            <p>❌ <span className="font-bold">Removed:</span> {result.removed ? "Yes" : "No"}</p>
-            <p>🔄 <span className="font-bold">Changes:</span> {result.change_types.join(", ")}</p>
+            <p>📊 <span className="font-bold">Score:</span> {result?.score}</p>
+            <p>📑 <span className="font-bold">Index:</span> {result?.structure_index}</p>
+            <p>🔖 <span className="font-bold">Status:</span> {result?.reserved ? "Reserved" : "Active"}</p>
+            <p>❌ <span className="font-bold">Removed:</span> {result?.removed ? "Yes" : "No"}</p>
+            <p>🔄 <span className="font-bold">Changes:</span> {result?.change_types?.join(", ")}</p>
           </div>
         </div>
       </div>
@@ -77,5 +79,14 @@ export default function SearchResultPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// Main page component with proper Suspense boundary
+export default function SearchResultPage() {
+  return (
+    <Suspense fallback={<p className="text-center text-gray-400">Loading search results...</p>}>
+      <SearchResultContent />
+    </Suspense>
   );
 }
