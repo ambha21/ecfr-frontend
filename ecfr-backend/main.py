@@ -17,6 +17,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/ping")
+def ping():
+    return {"message": "pong!"}
+
 @app.get("/titles")
 def get_titles():
     response = requests.get(f"{BASE_URL}/api/versioner/v1/titles.json")
